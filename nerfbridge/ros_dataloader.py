@@ -21,6 +21,7 @@ import nerfbridge.pose_utils as pose_utils
 from nerfbridge.ros_dataset import ROSDataset, ROSDepthDataset
 
 import rclpy
+from typing import Union
 from sensor_msgs.msg import Image, CompressedImage
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import String
@@ -143,6 +144,10 @@ class ROSDataloader(DataLoader):
             self.subs.append(
                 Subscriber(self.node, PoseStamped, self.dataset.pose_topic_name)
             )
+        elif slam_method == "vinsfusion":
+            self.subs.append(
+                Subscriber(self.node, Odometry, self.dataset.pose_topic_name)
+            ) 
         elif slam_method == "mocap":
             self.subs.append(
                 Subscriber(self.node, PoseStamped, self.dataset.pose_topic_name)
@@ -198,8 +203,7 @@ class ROSDataloader(DataLoader):
             self.updated = True
             self.current_idx += 1
             self.last_update_t = now
-
-    def image_callback(self, image: Image | CompressedImage):
+    def image_callback(self, image: Union[Image, CompressedImage]):
         """
         Callback for processing RGB Image Messages, and adding them to the
         dataset for training.
@@ -216,7 +220,7 @@ class ROSDataloader(DataLoader):
         # COPY the image data into the data tensor
         self.dataset.image_tensor[self.current_idx] = im_tensor
 
-    def pose_callback(self, pose: PoseStamped | Odometry):
+    def pose_callback(self, pose: Union[PoseStamped, Odometry]):
         """
         Callback for Pose messages. Extracts pose, converts it to Nerfstudio coordinate
         convention, and inserts it into the Cameras object.
@@ -229,6 +233,10 @@ class ROSDataloader(DataLoader):
             # PoseStamped Message
             hom_pose = pose_utils.ros_pose_to_homogenous(pose)
             c2w = pose_utils.orbslam3_to_nerfstudio(hom_pose)
+        elif self.slam_method == "vinsfusion":
+            # Odometry Message
+            hom_pose = pose_utils.ros_pose_to_homogenous(pose.pose)
+            c2w = pose_utils.vinsfusion_to_nerfstudio(hom_pose)
         elif self.slam_method == "mocap":
             # PoseStamped Message
             hom_pose = pose_utils.ros_pose_to_homogenous(pose)

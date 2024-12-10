@@ -55,6 +55,18 @@ def orbslam3_to_nerfstudio(T_orbslam3: torch.Tensor):
     T_ns[2, :] *= -1
     return T_ns[:3, :]
 
+def vinsfusion_to_nerfstudio(T_vinsfusion: torch.Tensor):
+    """
+    Converts a homogenous matrix 4x4 from the coordinate system used in vins_fusion
+    to the Nerfstudio camera coordinate system 3x4 matrix.
+
+    Equivalent operation to:
+        T_out = Tin @ (X by 180)
+    """
+    T_ns = T_vinsfusion.clone()  # Make a copy to avoid modifying the original matrix
+    T_ns[:, 1] *= -1  # Negate the second column (Y axis)
+    T_ns[:, 2] *= -1  # Negate the third column (Z axis)
+    return T_ns[:3, :]  # Return the 3x4 submatrix
 
 def mocap_to_nerfstudio(T_mocap: torch.Tensor):
     """

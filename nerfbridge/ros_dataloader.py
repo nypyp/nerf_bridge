@@ -13,12 +13,13 @@ import warnings
 from typing import Union
 
 from rich.console import Console
+import numpy as np
 import torch
 from torchvision.transforms import Resize
 from torch.utils.data.dataloader import DataLoader
 
 import nerfbridge.pose_utils as pose_utils
-from nerfbridge.ros_dataset import ROSDataset, ROSDepthDataset
+from nerfbridge.ros_dataset import ROSDataset, ROSDepthDataset, ROSSemanticDataset
 
 import rclpy
 from typing import Union
@@ -105,12 +106,19 @@ class ROSDataloader(DataLoader):
             self.depth_transform = Resize((self.H, self.W))
             self.listen_depth = True
 
+        # Flag for semantic training, add semantic lables to data.
+        self.listen_semantic = False
+        if isinstance(self.dataset, ROSSemanticDataset):
+            self.data_dict["semantics"] = self.dataset.semantic_labels
+            self.listen_semantic = True
+
         super().__init__(dataset=dataset, **kwargs)
 
         self.bridge = CvBridge()
         self.slam_method = slam_method
         self.use_compressed_rgb = use_compressed_rgb
 
+                
         # Initializing ROS2
         rclpy.init()
         self.node = rclpy.create_node("nerf_bridge_node")
@@ -162,6 +170,11 @@ class ROSDataloader(DataLoader):
                 Subscriber(self.node, Image, self.dataset.depth_topic_name)
             )
 
+        if self.listen_semantic:
+            self.subs.append(
+                Subscriber(self.node, Image, self.dataset.semantic_topic_name)
+            )
+
         if topic_sync == "approx":
             self.ts = ApproximateTimeSynchronizer(self.subs, 40, topic_slop)
         elif topic_sync == "exact":
@@ -192,6 +205,10 @@ class ROSDataloader(DataLoader):
             # Process Depth if using depth training
             if self.listen_depth:
                 self.depth_callback(args[2])
+                
+            # Process Semantic if using semantic training
+            if self.listen_semantic:
+                self.semantic_callback(args[2])
 
             self.health_pub.publish(
                 String(
@@ -219,6 +236,7 @@ class ROSDataloader(DataLoader):
 
         # COPY the image data into the data tensor
         self.dataset.image_tensor[self.current_idx] = im_tensor
+        
 
     def pose_callback(self, pose: Union[PoseStamped, Odometry]):
         """
@@ -268,6 +286,16 @@ class ROSDataloader(DataLoader):
         self.dataset.depth_tensor[self.current_idx] = (
             depth_tensor.unsqueeze(-1) * aggregate_scale
         )
+    
+    def semantic_callback(self, semantic: Image):
+        """
+        Callback for processing Semantic Image messages. Similar to RGB image handling,
+        but also rescales the depth to the appropriate value.
+        """
+        semantic_cv = self.bridge.imgmsg_to_cv2(semantic, semantic.encoding)
+        semantic_tensor = torch.from_numpy(np.array(semantic_cv, dtype="int64"))[..., None]
+
+        self.dataset.semantic_labels[self.current_idx] = semantic_tensor
 
     def __getitem__(self, idx):
         return self.dataset.__getitem__(idx)

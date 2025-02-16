@@ -133,3 +133,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+images
+modify_lables
+friends_dataset.zip
+command.txt
+.gitignore
+renders/
+
+mmdeploy_model

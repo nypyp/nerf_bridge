@@ -12,6 +12,7 @@ from nerfstudio.data.dataparsers.base_dataparser import (
     DataParser,
     DataParserConfig,
     DataparserOutputs,
+    Semantics
 )
 from nerfstudio.data.scene_box import SceneBox
 from nerfstudio.utils.io import load_from_json
@@ -122,6 +123,16 @@ class ROSDataParser(DataParser):
         if "depth_topic" in meta:
             metadata["depth_topic"] = meta["depth_topic"]
             metadata["depth_scale_factor"] = meta["depth_scale_factor"]
+        
+        # Only used if semantic training is enabled
+        if "semantic_topic" in meta:
+            metadata["semantic_topic"] = meta["semantic_topic"]
+            # empty tensor, parameter placeholder
+            semantics = None
+            classes = meta["classes"]
+            colors = torch.tensor(meta["colors"], dtype=torch.float32) / 255.0
+            semantics = Semantics(filenames=[], classes=classes, colors=colors)
+            metadata["semantics"] = semantics
 
         dataparser_outputs = DataparserOutputs(
             image_filenames=image_filenames,  # This is empty

@@ -9,5 +9,28 @@
     "image_topic": "/camera/color/image_raw/compressed",
     "pose_topic": "/visual_slam/tracking/odometry",
     "depth_topic": "/camera/aligned_depth_to_color/image_raw",
-    "depth_scale_factor": 1e-3
+    "depth_scale_factor": 1e-3,
+    "semantic_topic": "/semantic_lable",
+    "classes": [
+        "wall", "floor", "cabinet", "bed", "chair", "sofa", "table", 
+        "door", "window", "bookshelf", "picture", "counter", "blinds",
+        "desk", "shelves", "curtain", "dresser", "pillow", "mirror",
+        "floor_mat", "clothes", "ceiling", "books", "fridge", "tv",
+        "paper", "towel", "shower_curtain", "box", "whiteboard",
+        "person", "night_stand", "toilet", "sink", "lamp", "bathtub",
+        "bag"
+    ],
+    "colors": [
+        [218, 59, 123], [75, 7, 46], [0, 200, 0], [67, 0, 143],
+        [0, 53, 122], [101, 0, 141], [24, 61, 0], [132, 0, 193],
+        [201, 60, 128], [142, 5, 61], [191, 0, 126], [190, 194, 58],
+        [70, 0, 195], [199, 127, 190], [72, 3, 48], [62, 66, 174],
+        [187, 191, 192], [30, 2, 1],  [175, 0, 0], [198, 120, 12],
+        [87, 126, 125], [218, 124, 124], [121, 193, 0], [255, 188, 0],
+        [84, 68, 131], [131, 128, 1], [240, 191, 132], [195, 187, 136],
+        [19, 133, 57], [120, 0, 0], [120, 120, 120], [180, 120, 120],
+        [6, 230, 230], [80, 50, 50], [4, 200, 3], [120, 120, 80],
+        [140, 140, 140]
+    ]
+
 }

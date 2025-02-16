@@ -1,0 +1,46 @@
+{
+  // 使用 IntelliSense 了解相关属性。
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: train ros-nerfacto",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/home/nypyp/miniconda3/envs/nerfbridge38/lib/python3.8/site-packages/nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "ros-nerfacto",
+        "--data",
+        "configs/desk.json",
+        "--pipeline.datamanager.use-compressed-rgb",
+        "True",
+        "--pipeline.datamanager.dataparser.scene-scale-factor",
+        "0.5",
+        "--pipeline.datamanager.data-update-freq",
+        "8.0"
+      ]
+    },
+    {
+      "name": "Python: train ros-semantic-nerfw",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/home/nypyp/miniconda3/envs/nerfbridge38/lib/python3.8/site-packages/nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "ros-semantic-nerfw",
+        "--data",
+          "configs/desk.json",
+        "--pipeline.datamanager.use-compressed-rgb",
+          "True",
+        "--pipeline.datamanager.dataparser.scene-scale-factor",
+          "0.5",
+        "--pipeline.datamanager.data-update-freq",
+          "8.0"
+      ]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ from mmdeploy_runtime import Segmentor
 class ROSSegmentor:
     def __init__(self, 
                  model_path,
+                 mapping_file,
                  use_compressed_rgb=True,
                  enable_visualization=False):
         rclpy.init()
@@ -31,6 +32,9 @@ class ROSSegmentor:
         self.semantic_pub = self.node.create_publisher(Image, 'semantic_lable', 10)
         self.health_pub = self.node.create_publisher(String, 'health', 10)
 
+        # 语义标签映射
+        self.mapping = self.load_mapping(mapping_file)
+        
         self.node.get_logger().info('ros_segmentor_node started')
         
         # 可视化相关
@@ -38,6 +42,14 @@ class ROSSegmentor:
         if enable_visualization:
             self.vis_pub = self.node.create_publisher(Image, 'semantic_colormap', 10)
             self.node.get_logger().set_level(rclpy.logging.LoggingSeverity.DEBUG)
+    
+    def load_mapping(self, mapping_file):
+        mapping = []
+        with open(mapping_file, 'r') as f:
+            for line in f:
+                _, target = line.strip().split(',')
+                mapping.append(int(target) if int(target)!=-1 else 0)
+        return mapping
     def image_callback(self, image: Union[Image, CompressedImage]):
         try:
             # 图像预处理
@@ -49,6 +61,7 @@ class ROSSegmentor:
             # 语义分割（已预初始化）
             t0 = time.perf_counter()
             semantic_cv = self.segmentor(im_cv)  # segmentor 应在 __init__ 中初始化
+            semantic_cv = np.vectorize(lambda x: self.mapping[x])(semantic_cv)
             infer_time = (time.perf_counter() - t0) * 1000
             self.node.get_logger().debug(f"Inference time: {infer_time:.1f}ms")
             
@@ -75,9 +88,10 @@ class ROSSegmentor:
         
 def main(args=None):
     ros_node = ROSSegmentor(
-        model_path='/home/nypyp/code/nerf_bridge/mmdeploy_model/deeplabv3plus-r50-d8_sunrgb',
+        model_path='/home/nypyp/code/nerf_bridge/mmdeploy_model/mask2former_r50-b_ade20k_onnx',
+        mapping_file='/home/nypyp/code/nerf_bridge/mapper/ade20k_to_scannet_v2.csv',
         use_compressed_rgb=True,
-        enable_visualization=False)  # 默认关闭可视化
+        enable_visualization=True)  # 默认关闭可视化
     rclpy.spin(ros_node.node)
     ros_node.node.destroy_node()
     rclpy.shutdown()
